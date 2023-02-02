@@ -1,6 +1,6 @@
 [package]
 name = "react-component"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "A CLI tool to generate React component files"
 authors = ["William Roberts"]
