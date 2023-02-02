@@ -53,14 +53,14 @@ fn check_or_create_path(path: &PathBuf) -> Result<(), Box<dyn Error>> {
 }
 
 fn create_component(path: &Path, name: &str) -> Result<(), Box<dyn Error>> {
-    let content = template::get("component.txt", &name).unwrap();
+    let content = template::get("component", &name).unwrap();
     template::create(&path, &content)?;
 
     Ok(())
 }
 
 fn create_component_test(path: &Path, name: &str) -> Result<(), Box<dyn Error>> {
-    let content = template::get("component-test.txt", &name).unwrap();
+    let content = template::get("test", &name).unwrap();
     template::create(&path, &content)?;
 
     Ok(())

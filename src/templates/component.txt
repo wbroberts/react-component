@@ -1,9 +1,0 @@
-import React from 'react';
-
-type {{ name }}Props = {};
-
-export const {{name}}: React.ComponentType<{{name}}Props> = ({}) => {
-  return (
-    <div>{{name}} renders</div>
-  )
-};
