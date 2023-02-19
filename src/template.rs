@@ -36,7 +36,7 @@ export const {{name}}Story: Story<{{name}}Props> = (args) => {
   return (<{{name}} {...args} />)
 };
 
-export default Story;
+export default story;
 "#;
 
 pub enum TemplateType {

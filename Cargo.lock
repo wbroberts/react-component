@@ -688,7 +688,7 @@ dependencies = [
 
 [[package]]
 name = "react-component"
-version = "0.2.2"
+version = "0.2.1"
 dependencies = [
  "clap",
  "colored",
