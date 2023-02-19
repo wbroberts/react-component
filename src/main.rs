@@ -1,67 +1,42 @@
-mod component;
+mod cli;
 mod template;
 
-use std::{
-    error::Error,
-    fs,
-    path::{Path, PathBuf},
-    process,
-};
+use std::process;
 
-use component::Component;
+use cli::CLI;
+use colored::Colorize;
+use template::{Template, TemplateType};
 
 fn main() {
-    let c = Component::get();
+    let args = CLI::parse();
+    let templates = get_templates(&args);
 
-    if let Err(e) = check_or_create_path(&c.path) {
-        println!("{e}");
-        process::exit(1)
-    }
-
-    let mut name_path = PathBuf::from(&c.name.clone());
-
-    if let Some(s) = name_path.extension() {
-        eprintln!("error creating file because of an extension: {:?}", &s);
-        process::exit(1);
-    } else {
-        name_path.set_extension("component.tsx");
-    }
-
-    if let Err(e) = create_component(&c.path.join(&name_path), &c.name) {
-        println!("could not create file: {}", e);
-        process::exit(1)
-    }
-
-    name_path.set_extension("test.tsx");
-
-    if !c.skip_tests {
-        if let Err(e) = create_component_test(&c.path.join(&name_path), &c.name) {
-            println!("could not create file: {}", e);
+    let template = match Template::new(&args.name, templates) {
+        Ok(t) => t,
+        Err(e) => {
+            eprintln!("❌ {}: {}", "Error".bold().red(), e);
             process::exit(1)
         }
+    };
+
+    if let Err(e) = template.create(&args.path) {
+        eprintln!("❌ {}: {}", "Error".bold().red(), e);
+        process::exit(1)
     }
 }
 
-fn check_or_create_path(path: &PathBuf) -> Result<(), Box<dyn Error>> {
-    let exists = Path::new(path).exists();
+fn get_templates(config: &CLI) -> Vec<TemplateType> {
+    let mut templates: Vec<TemplateType> = Vec::with_capacity(3);
 
-    if !exists {
-        fs::create_dir_all(path)?;
+    templates.insert(0, TemplateType::Component);
+
+    if config.tests {
+        templates.insert(1, TemplateType::Test);
     }
 
-    Ok(())
-}
+    if config.stories {
+        templates.insert(2, TemplateType::Storybook);
+    }
 
-fn create_component(path: &Path, name: &str) -> Result<(), Box<dyn Error>> {
-    let content = template::get("component", &name).unwrap();
-    template::create(&path, &content)?;
-
-    Ok(())
-}
-
-fn create_component_test(path: &Path, name: &str) -> Result<(), Box<dyn Error>> {
-    let content = template::get("test", &name).unwrap();
-    template::create(&path, &content)?;
-
-    Ok(())
+    templates
 }

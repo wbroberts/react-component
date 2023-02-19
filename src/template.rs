@@ -1,15 +1,14 @@
 use std::{error::Error, fs, io::Write, path::Path};
 
+use colored::Colorize;
 use tera::{Context, Tera};
 
 const COMPONENT_TEMPLATE: &str = r#"import React from 'react';
 
-type {{ name }}Props = {};
+export type {{ name }}Props = {};
 
 export const {{name}}: React.ComponentType<{{name}}Props> = ({}) => {
-  return (
-    <div>{{name}} renders</div>
-  )
+  return (<div>{{name}} renders</div>);
 };
 "#;
 
@@ -25,22 +24,96 @@ describe('{{name}}', () => {
 });
 "#;
 
-pub fn get(template_name: &str, name: &str) -> Result<String, Box<dyn Error>> {
-    let mut tera = Tera::new("./**/*").unwrap();
-    tera.add_raw_template("component", COMPONENT_TEMPLATE)?;
-    tera.add_raw_template("test", TEST_TEMPLATE)?;
+const STORY_TEMPLATE: &str = r#"import { ComponentMeta, Story } from '@storybook/react';
 
-    let mut context = Context::new();
-    context.insert("name", &name);
+import { {{name}}, {{name}}Props } from './{{name}}.component';
 
-    let template = tera.render(template_name, &context)?;
+const story: ComponentMeta<typeof {{name}}> = {
+  title: '{{name}}'
+};
 
-    Ok(template)
+export const {{name}}Story: Story<{{name}}Props> = (args) => {
+  return (<{{name}} {...args} />)
+};
+
+export default Story;
+"#;
+
+pub enum TemplateType {
+    Component,
+    Test,
+    Storybook,
 }
 
-pub fn create(path: &Path, content: &str) -> Result<(), Box<dyn Error>> {
-    let mut file = fs::File::create(path)?;
-    file.write_all(content.as_bytes())?;
+impl ToString for TemplateType {
+    fn to_string(&self) -> String {
+        match self {
+            TemplateType::Component => "component".to_string(),
+            TemplateType::Test => "test".to_string(),
+            TemplateType::Storybook => "stories".to_string(),
+        }
+    }
+}
 
+pub struct Template {
+    name: String,
+    tera: Tera,
+    templates: Vec<TemplateType>,
+}
+
+impl Template {
+    pub fn new(name: &str, templates: Vec<TemplateType>) -> Result<Template, Box<dyn Error>> {
+        assert!(templates.len() > 0);
+
+        let mut tera = Tera::new("*")?;
+
+        tera.add_raw_template("component", COMPONENT_TEMPLATE)?;
+        tera.add_raw_template("test", TEST_TEMPLATE)?;
+        tera.add_raw_template("stories", STORY_TEMPLATE)?;
+
+        Ok(Template {
+            name: String::from(name),
+            tera,
+            templates,
+        })
+    }
+
+    pub fn create(&self, path: &Path) -> Result<(), Box<dyn Error>> {
+        if !path.exists() {
+            create_path(&path)?;
+        }
+
+        let mut context = Context::new();
+        context.insert("name", &self.name);
+
+        for template_type in &self.templates {
+            let mut template_path = Path::new(path).join(&self.name);
+            let template_name = template_type.to_string();
+
+            let mut ext = template_name.clone();
+            ext.push_str(".tsx");
+
+            template_path.set_extension(ext);
+
+            let template = &self.tera.render(&template_name, &context)?;
+
+            self.write(&template_path.as_path(), &template)?;
+
+            println!("✔️ {} {}", "Created".green(), template_path.display());
+        }
+
+        Ok(())
+    }
+
+    fn write(&self, path: &Path, content: &str) -> Result<(), Box<dyn Error>> {
+        let mut file = fs::File::create(path)?;
+        file.write_all(content.as_bytes())?;
+
+        Ok(())
+    }
+}
+
+fn create_path(path: &Path) -> Result<(), Box<dyn Error>> {
+    fs::create_dir_all(path)?;
     Ok(())
 }

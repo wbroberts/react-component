@@ -1,6 +1,6 @@
 [package]
 name = "react-component"
-version = "0.1.2"
+version = "0.2.2"
 edition = "2021"
 description = "A CLI tool to generate React component files"
 authors = ["William Roberts"]
@@ -9,4 +9,5 @@ repository = "https://github.com/wbroberts/react-component"
 
 [dependencies]
 clap = { version = "4.1.1", features = ["derive"] }
+colored = "2.0.0"
 tera = "1.17.1"

@@ -17,7 +17,7 @@ react-component <component name> <...options>
 ### Example
 
 ```bash
-react-component Example -p src/components/examples
+react-component Example --path src/components/examples
 ```
 
 Generates two files:
