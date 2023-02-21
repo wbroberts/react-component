@@ -1,39 +1,40 @@
 use std::{error::Error, fs, io::Write, path::Path};
 
 use colored::Colorize;
-use tera::{Context, Tera};
+use serde::Serialize;
+use tinytemplate::TinyTemplate;
 
 const COMPONENT_TEMPLATE: &str = r#"import React from 'react';
 
-export type {{ name }}Props = {};
+export type {name}Props = \{};
 
-export const {{name}}: React.ComponentType<{{name}}Props> = ({}) => {
-  return (<div>{{name}} renders</div>);
+export const {name}: React.ComponentType<{name}Props> = (\{}) => \{
+  return (<div>{name} renders</div>);
 };
 "#;
 
-const TEST_TEMPLATE: &str = r#"import { screen, render } from '@testing-library/react';
+const TEST_TEMPLATE: &str = r#"import \{ screen, render } from '@testing-library/react';
 
-import { {{name}} } from './{{name}}.component';
+import \{ {name} } from './{name}.component';
 
-describe('{{name}}', () => {
-  it('renders', () => {
-    render(<{{name}} />);
-      expect(screen.getByText(/{{name}} renders/)).toBeDefined();
+describe('{name}', () => \{
+  it('renders', () => \{
+    render(<{name} />);
+      expect(screen.getByText(/{name} renders/)).toBeDefined();
   });
 });
 "#;
 
-const STORY_TEMPLATE: &str = r#"import { ComponentMeta, Story } from '@storybook/react';
+const STORY_TEMPLATE: &str = r#"import \{ ComponentMeta, Story } from '@storybook/react';
 
-import { {{name}}, {{name}}Props } from './{{name}}.component';
+import \{ {name}, {name}Props } from './{name}.component';
 
-const story: ComponentMeta<typeof {{name}}> = {
-  title: '{{name}}'
+const story: ComponentMeta<typeof {name}> = \{
+  title: '{name}'
 };
 
-export const {{name}}Story: Story<{{name}}Props> = (args) => {
-  return (<{{name}} {...args} />)
+export const {name}Story: Story<{name}Props> = (args) => \{
+  return (<{name} \{...args} />)
 };
 
 export default story;
@@ -55,25 +56,32 @@ impl ToString for TemplateType {
     }
 }
 
-pub struct Template {
+#[derive(Serialize)]
+struct Context {
     name: String,
-    tera: Tera,
+}
+
+pub struct Template<'a> {
+    renderer: TinyTemplate<'a>,
+    context: Context,
     templates: Vec<TemplateType>,
 }
 
-impl Template {
+impl<'a> Template<'a> {
     pub fn new(name: &str, templates: Vec<TemplateType>) -> Result<Template, Box<dyn Error>> {
-        assert!(templates.len() > 0);
+        let mut renderer = TinyTemplate::new();
 
-        let mut tera = Tera::new("*")?;
+        renderer.add_template("component", COMPONENT_TEMPLATE)?;
+        renderer.add_template("test", TEST_TEMPLATE)?;
+        renderer.add_template("stories", STORY_TEMPLATE)?;
 
-        tera.add_raw_template("component", COMPONENT_TEMPLATE)?;
-        tera.add_raw_template("test", TEST_TEMPLATE)?;
-        tera.add_raw_template("stories", STORY_TEMPLATE)?;
+        let context = Context {
+            name: String::from(name),
+        };
 
         Ok(Template {
-            name: String::from(name),
-            tera,
+            renderer,
+            context,
             templates,
         })
     }
@@ -83,11 +91,8 @@ impl Template {
             create_path(&path)?;
         }
 
-        let mut context = Context::new();
-        context.insert("name", &self.name);
-
         for template_type in &self.templates {
-            let mut template_path = Path::new(path).join(&self.name);
+            let mut template_path = Path::new(path).join(&self.context.name);
             let template_name = template_type.to_string();
 
             let mut ext = template_name.clone();
@@ -95,7 +100,7 @@ impl Template {
 
             template_path.set_extension(ext);
 
-            let template = &self.tera.render(&template_name, &context)?;
+            let template = &self.renderer.render(&template_name, &self.context)?;
 
             self.write(&template_path.as_path(), &template)?;
 

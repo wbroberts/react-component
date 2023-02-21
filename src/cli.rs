@@ -30,6 +30,8 @@ impl CLI {
 
 fn command() -> Command {
     Command::new("react-component")
+        .about("Generates files that are common for React components")
+        .version("0.2.2")
         .arg(name_arg())
         .arg(test_flag())
         .arg(stories_flag())
