@@ -8,6 +8,7 @@ pub struct CLI {
     pub path: PathBuf,
     pub tests: bool,
     pub stories: bool,
+    pub contained: bool,
 }
 
 impl CLI {
@@ -18,12 +19,14 @@ impl CLI {
         let path = matches.get_one::<PathBuf>("path").unwrap();
         let no_tests = matches.get_one::<bool>("tests").unwrap();
         let no_storybook = matches.get_one::<bool>("storybook").unwrap();
+        let contained = matches.get_one::<bool>("contained").unwrap();
 
         CLI {
-            name: name.to_owned(),
             path: path.to_owned(),
+            name: name.to_owned(),
             tests: !no_tests.to_owned(),
             stories: !no_storybook.to_owned(),
+            contained: contained.to_owned(),
         }
     }
 }
@@ -36,6 +39,7 @@ fn command() -> Command {
         .arg(test_flag())
         .arg(stories_flag())
         .arg(path_flag())
+        .arg(contained_flag())
 }
 
 fn name_arg() -> Arg {
@@ -74,4 +78,14 @@ fn stories_flag() -> Arg {
         .action(ArgAction::SetTrue)
         .value_parser(ValueParser::bool())
         .help("Skip adding a story")
+}
+
+fn contained_flag() -> Arg {
+    Arg::new("contained")
+        .long("contained")
+        .short('c')
+        .required(false)
+        .action(ArgAction::SetTrue)
+        .value_parser(ValueParser::bool())
+        .help("Contain all files within a single directory with the same name as the component")
 }

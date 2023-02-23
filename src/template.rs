@@ -86,7 +86,7 @@ impl<'a> Template<'a> {
         })
     }
 
-    pub fn create(&self, path: &Path) -> Result<(), Box<dyn Error>> {
+    pub fn create(&self, path: &Path, contained: bool) -> Result<(), Box<dyn Error>> {
         if !path.exists() {
             create_path(&path)?;
         }
@@ -102,17 +102,18 @@ impl<'a> Template<'a> {
 
             let template = &self.renderer.render(&template_name, &self.context)?;
 
-            self.write(&template_path.as_path(), &template)?;
+            write(&template_path.as_path(), &template)?;
 
             println!("✔️ {} {}", "Created".green(), template_path.display());
         }
 
-        Ok(())
-    }
+        if contained {
+            let export = format!("export * from './{}.component';", &self.context.name);
+            let index_path = &path.join("index.ts");
 
-    fn write(&self, path: &Path, content: &str) -> Result<(), Box<dyn Error>> {
-        let mut file = fs::File::create(path)?;
-        file.write_all(content.as_bytes())?;
+            write(index_path, &export)?;
+            println!("✔️ {} {}", "Created".green(), index_path.display());
+        }
 
         Ok(())
     }
@@ -120,5 +121,12 @@ impl<'a> Template<'a> {
 
 fn create_path(path: &Path) -> Result<(), Box<dyn Error>> {
     fs::create_dir_all(path)?;
+    Ok(())
+}
+
+fn write(path: &Path, content: &str) -> Result<(), Box<dyn Error>> {
+    let mut file = fs::File::create(path)?;
+    file.write_all(content.as_bytes())?;
+
     Ok(())
 }

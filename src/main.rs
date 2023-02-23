@@ -19,7 +19,14 @@ fn main() {
         }
     };
 
-    if let Err(e) = template.create(&args.path) {
+    let path = if args.contained {
+        let contained_path = args.path.join(&args.name);
+        contained_path
+    } else {
+        args.path
+    };
+
+    if let Err(e) = template.create(&path, args.contained) {
         eprintln!("❌ {}: {}", "Error".bold().red(), e);
         process::exit(1)
     }
