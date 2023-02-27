@@ -21,8 +21,15 @@ impl CLI {
         let no_storybook = matches.get_one::<bool>("storybook").unwrap();
         let contain = matches.get_one::<bool>("contain").unwrap();
 
+        let path = if *contain {
+            let contained_path = path.join(&name);
+            contained_path
+        } else {
+            path.to_owned()
+        };
+
         CLI {
-            path: path.to_owned(),
+            path,
             name: name.to_owned(),
             tests: !no_tests.to_owned(),
             stories: !no_storybook.to_owned(),

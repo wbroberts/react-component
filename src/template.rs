@@ -20,7 +20,7 @@ import \{ {name} } from './{name}.component';
 describe('{name}', () => \{
   it('renders', () => \{
     render(<{name} />);
-      expect(screen.getByText(/{name} renders/)).toBeDefined();
+    expect(screen.getByText(/{name} renders/)).toBeDefined();
   });
 });
 "#;

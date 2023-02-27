@@ -11,6 +11,10 @@ cargo install react-component
 ## How To Use
 
 ```bash
+react-component --help
+```
+
+```bash
 react-component <component name> <...options>
 ```
 
@@ -20,23 +24,21 @@ react-component <component name> <...options>
 react-component Example --path src/components/examples
 ```
 
-Generates two files:
+Generates three files:
 
 - `src/components/examples/Example.component.tsx`
 
 ```tsx
 import React from 'react';
 
-type ExampleProps = {};
+export type ExampleProps = {};
 
 export const Example: React.ComponentType<ExampleProps> = ({}) => {
-  return (
-    <div>Example renders</div>
-  )
+  return (<div>Example renders</div>);
 };
 ```
 
-- `src/components/examples/Example.component.test.tsx`
+- `src/components/examples/Example.test.tsx`
 
 ```tsx
 import { screen, render } from '@testing-library/react';
@@ -44,16 +46,27 @@ import { screen, render } from '@testing-library/react';
 import { Example } from './Example.component';
 
 describe('Example', () => {
- it('renders', () => {
-  render(<Example />);
-
-  expect(screen.getByText(/Example renders/)).toBeDefined();
- });
+  it('renders', () => {
+    render(<Example />);
+    expect(screen.getByText(/Example renders/)).toBeDefined();
+  });
 });
 ```
 
-## Help
+- `src/components/examples/Example.stories.tsx`
 
-```bash
-react-component --help
+```tsx
+import { ComponentMeta, Story } from '@storybook/react';
+
+import { Example, ExampleProps } from './Example.component';
+
+const story: ComponentMeta<typeof Example> = {
+  title: 'Example'
+};
+
+export const ExampleStory: Story<ExampleProps> = (args) => {
+  return (<Example {...args} />)
+};
+
+export default story;
 ```
