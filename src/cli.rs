@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{builder::ValueParser, Arg, ArgAction, Command};
+use clap::{builder::ValueParser, crate_version, Arg, ArgAction, Command};
 
 #[derive(Debug)]
 pub struct CLI {
@@ -41,7 +41,7 @@ impl CLI {
 fn command() -> Command {
     Command::new("react-component")
         .about("Generates files that are common for React components")
-        .version("0.2.5")
+        .version(crate_version!())
         .arg(name_arg())
         .arg(test_flag())
         .arg(stories_flag())
